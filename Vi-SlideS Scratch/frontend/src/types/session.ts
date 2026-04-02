@@ -15,3 +15,13 @@ export interface Session {
   startedAt?: string;
   endedAt?: string;
 }
+
+export interface Question {
+  _id: string;
+  sessionCode: string;
+  text: string;
+  studentName: string;
+  answer: string | null;
+  answeredAt: string | null;
+  createdAt: string;
+}
