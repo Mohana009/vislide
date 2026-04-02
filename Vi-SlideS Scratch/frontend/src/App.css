@@ -1,0 +1,241 @@
+.page {
+  max-width: 440px;
+  margin: 64px auto;
+  padding: 28px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  background: #ffffff;
+  text-align: left;
+}
+
+.title {
+  margin: 0 0 18px;
+  color: #0f172a;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #ffffff;
+  background: #2563eb;
+  cursor: pointer;
+  font-size: 15px;
+  margin-right: 8px;
+}
+
+.btn.secondary {
+  background: #0ea5e9;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.message {
+  margin-top: 14px;
+  color: #334155;
+}
+
+.error {
+  margin-top: 12px;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.page-wide {
+  max-width: 560px;
+}
+
+.hint {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.subheading {
+  margin: 20px 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.session-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.session-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.session-code {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
+}
+
+.session-code code {
+  font-size: 14px;
+  padding: 2px 6px;
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badge-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-paused {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.badge-ended {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-inactive {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.btn.danger {
+  background: #dc2626;
+}
+
+.btn.ghost {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+a.btn {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.participant-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.participant-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+}
+
+.participant-list li:last-child {
+  border-bottom: none;
+}
+
+.participant-name {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.participant-time {
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.footer-links {
+  margin-top: 16px;
+}
+
+.link {
+  color: #2563eb;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.auth-nav {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 12px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.role-fieldset {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.role-legend {
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 16px;
+  font-size: 15px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.role-option input {
+  margin: 0;
+}
