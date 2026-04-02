@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AuthNav } from "../components/AuthNav";
-import { getSession, patchSessionStatus } from "../services/api";
-import type { Session } from "../types/session";
+import { getSession, patchSessionStatus, getQuestions, answerQuestion } from "../services/api";
+import type { Session, Question } from "../types/session";
 
 const SessionManage = () => {
   const { code } = useParams<{ code: string }>();
@@ -10,8 +10,14 @@ const SessionManage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [questions, setQuestions] = useState<string[]>([]);
-const [index, setIndex] = useState(0);
+
+  // Questions state — properly typed as Question[]
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [index, setIndex] = useState(0);
+  const [answerText, setAnswerText] = useState("");
+  const [answerLoading, setAnswerLoading] = useState(false);
+  const [answerError, setAnswerError] = useState("");
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
     if (!code) return;
@@ -27,40 +33,39 @@ const [index, setIndex] = useState(0);
       setLoading(false);
     }
   }, [code]);
-useEffect(() => {
-  void load();
-}, [load]);
-useEffect(() => {
-  const fetchQuestions = async () => {
+
+  // Fetch questions and keep polling every 3 seconds
+  const fetchQuestions = useCallback(async () => {
+    if (!code) return;
     try {
-      if (!code) return;
-
-      const res = await fetch(
-        `http://localhost:5000/api/questions/${code}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      const data = await res.json();
-
-      console.log("QUESTIONS FROM BACKEND:", data); // 👈 IMPORTANT
-
+      const data = await getQuestions(code);
       setQuestions(data);
-    } catch (err) {
-      console.error("FETCH ERROR:", err);
+    } catch {
+      // Silently ignore polling errors
     }
-  };
+  }, [code]);
 
-  fetchQuestions();
-}, [code]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
+  useEffect(() => {
+    void fetchQuestions();
+    intervalRef.current = setInterval(() => {
+      void fetchQuestions();
+    }, 3000);
 
-useEffect(() => {
-  console.log(session);
-}, [session]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [fetchQuestions]);
+
+  // Keep current index in bounds when questions list changes
+  useEffect(() => {
+    if (index >= questions.length && questions.length > 0) {
+      setIndex(questions.length - 1);
+    }
+  }, [questions.length]);
 
   const onStatus = async (status: "active" | "paused" | "ended") => {
     if (!code) return;
@@ -73,6 +78,25 @@ useEffect(() => {
       setError(e instanceof Error ? e.message : "Update failed");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const currentQuestion = questions.length > 0 ? questions[index] : null;
+
+  const handleAnswer = async () => {
+    if (!currentQuestion || !answerText.trim()) return;
+    setAnswerLoading(true);
+    setAnswerError("");
+    try {
+      const updated = await answerQuestion(currentQuestion._id, answerText.trim());
+      setQuestions((prev) =>
+        prev.map((q) => (q._id === updated._id ? updated : q))
+      );
+      setAnswerText("");
+    } catch (e) {
+      setAnswerError(e instanceof Error ? e.message : "Failed to submit answer");
+    } finally {
+      setAnswerLoading(false);
     }
   };
 
@@ -143,43 +167,6 @@ useEffect(() => {
                 >
                   End session
                 </button>
-                <hr />
-
-<h3 className="subheading">Slides View</h3>
-
-<div
-  style={{
-    height: "60vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#000",
-    color: "#fff",
-    marginTop: "20px",
-  }}
->
-  <h1 style={{ fontSize: "2rem", textAlign: "center", color: "#fff" }}>
-    {questions.length ? questions[index] : "No questions yet"}
-  </h1>
-
-  <div style={{ marginTop: "20px" }}>
-    <button
-      onClick={() => setIndex(index - 1)}
-      disabled={index === 0}
-    >
-      Prev
-    </button>
-
-    <button
-      onClick={() => setIndex(index + 1)}
-      disabled={index === questions.length - 1}
-      style={{ marginLeft: "10px" }}
-    >
-      Next
-    </button>
-  </div>
-</div>
               </>
             )}
             <button
@@ -194,7 +181,143 @@ useEffect(() => {
 
           {error && <p className="error">{error}</p>}
 
+          <hr />
+
+          {/* ─── SLIDES / QUESTIONS VIEW ─────────────────────────────── */}
           <h3 className="subheading">
+            Student Questions ({questions.length})
+          </h3>
+
+          <div
+            style={{
+              minHeight: "60vh",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "#000",
+              color: "#fff",
+              marginTop: "20px",
+              padding: "32px",
+              borderRadius: "8px",
+            }}
+          >
+            {currentQuestion ? (
+              <>
+                {/* Student info */}
+                <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "8px" }}>
+                  Asked by {currentQuestion.studentName}
+                </p>
+
+                {/* Question text */}
+                <h1 style={{ fontSize: "2rem", textAlign: "center", color: "#fff", margin: 0 }}>
+                  {currentQuestion.text}
+                </h1>
+
+                {/* Answer status */}
+                {currentQuestion.answer ? (
+                  <div
+                    style={{
+                      marginTop: "20px",
+                      backgroundColor: "#166534",
+                      padding: "12px 20px",
+                      borderRadius: "8px",
+                      maxWidth: "600px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <p style={{ margin: 0, color: "#fff", fontWeight: 600 }}>
+                      Answered: {currentQuestion.answer}
+                    </p>
+                  </div>
+                ) : (
+                  /* Answer input — only shown when not yet answered */
+                  <div
+                    style={{
+                      marginTop: "24px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "10px",
+                      width: "100%",
+                      maxWidth: "500px",
+                    }}
+                  >
+                    <input
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: "6px",
+                        border: "none",
+                        fontSize: "1rem",
+                        color: "#000",
+                      }}
+                      placeholder="Type your answer..."
+                      value={answerText}
+                      onChange={(e) => setAnswerText(e.target.value)}
+                      disabled={answerLoading}
+                    />
+                    <button
+                      style={{
+                        padding: "10px 24px",
+                        backgroundColor: "#2563eb",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "1rem",
+                      }}
+                      onClick={handleAnswer}
+                      disabled={answerLoading || !answerText.trim()}
+                    >
+                      {answerLoading ? "Submitting..." : "Submit Answer"}
+                    </button>
+                    {answerError && (
+                      <p style={{ color: "#fca5a5", margin: 0 }}>{answerError}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Prev / Next navigation */}
+                <div style={{ marginTop: "28px", display: "flex", gap: "12px" }}>
+                  <button
+                    onClick={() => { setIndex(index - 1); setAnswerText(""); setAnswerError(""); }}
+                    disabled={index === 0}
+                    style={{
+                      padding: "8px 20px",
+                      borderRadius: "6px",
+                      cursor: index === 0 ? "not-allowed" : "pointer",
+                      opacity: index === 0 ? 0.4 : 1,
+                    }}
+                  >
+                    ← Prev
+                  </button>
+                  <span style={{ color: "#aaa", lineHeight: "36px" }}>
+                    {index + 1} / {questions.length}
+                  </span>
+                  <button
+                    onClick={() => { setIndex(index + 1); setAnswerText(""); setAnswerError(""); }}
+                    disabled={index === questions.length - 1}
+                    style={{
+                      padding: "8px 20px",
+                      borderRadius: "6px",
+                      cursor: index === questions.length - 1 ? "not-allowed" : "pointer",
+                      opacity: index === questions.length - 1 ? 0.4 : 1,
+                    }}
+                  >
+                    Next →
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p style={{ color: "#aaa", fontSize: "1.2rem" }}>
+                No questions yet — waiting for students to ask...
+              </p>
+            )}
+          </div>
+
+          {/* ─── PARTICIPANTS ─────────────────────────────────────────── */}
+          <h3 className="subheading" style={{ marginTop: "32px" }}>
             Participants ({(session.participants ?? []).length})
           </h3>
           {(session.participants ?? []).length === 0 ? (
