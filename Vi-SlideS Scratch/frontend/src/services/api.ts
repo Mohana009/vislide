@@ -1,9 +1,10 @@
-import type { Session, SessionStatus } from "../types/session";
+import type { Session, SessionStatus, Question } from "../types/session";
 
-const API = "http://localhost:5000/api/session";
+const SESSION_API = "http://localhost:5000/api/session";
+const QUESTIONS_API = "http://localhost:5000/api/questions";
 
 export const createSession = async (title: string): Promise<Session> => {
-  const res = await fetch(API, {
+  const res = await fetch(SESSION_API, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -22,7 +23,7 @@ export const joinSession = async (
   code: string,
   displayName: string
 ): Promise<Session> => {
-  const res = await fetch(`${API}/join`, {
+  const res = await fetch(`${SESSION_API}/join`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -40,7 +41,7 @@ export const joinSession = async (
 
 export const getSession = async (code: string): Promise<Session> => {
   const normalized = code.trim().toUpperCase();
-  const res = await fetch(`${API}/${encodeURIComponent(normalized)}`);
+  const res = await fetch(`${SESSION_API}/${encodeURIComponent(normalized)}`);
 
   const data = await res.json();
   if (!res.ok) {
@@ -56,7 +57,7 @@ export const patchSessionStatus = async (
 ): Promise<Session> => {
   const normalized = code.trim().toUpperCase();
   const res = await fetch(
-    `${API}/${encodeURIComponent(normalized)}/status`,
+    `${SESSION_API}/${encodeURIComponent(normalized)}/status`,
     {
       method: "PATCH",
       headers: {
@@ -73,20 +74,22 @@ export const patchSessionStatus = async (
 
   return data;
 };
-export const sendQuestion = async (code: string, question: string) => {
-  const res = await fetch(`http://localhost:5000/api/questions`, {
+
+// Send a question from a student
+export const sendQuestion = async (
+  sessionCode: string,
+  text: string,
+  studentName: string
+): Promise<Question> => {
+  const res = await fetch(QUESTIONS_API, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-  sessionCode: code,
-  text: question,
-})
+    body: JSON.stringify({ sessionCode, text, studentName }),
   });
 
   const data = await res.json();
-
   if (!res.ok) {
     throw new Error(data?.message || "Failed to send question");
   }
@@ -94,3 +97,35 @@ export const sendQuestion = async (code: string, question: string) => {
   return data;
 };
 
+// Get all questions for a session
+export const getQuestions = async (sessionCode: string): Promise<Question[]> => {
+  const res = await fetch(`${QUESTIONS_API}/${sessionCode}`);
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.message || "Failed to fetch questions");
+  }
+
+  return data;
+};
+
+// Teacher answers a specific question
+export const answerQuestion = async (
+  questionId: string,
+  answer: string
+): Promise<Question> => {
+  const res = await fetch(`${QUESTIONS_API}/${questionId}/answer`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ answer }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.message || "Failed to submit answer");
+  }
+
+  return data;
+};
