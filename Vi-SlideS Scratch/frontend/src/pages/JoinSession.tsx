@@ -16,6 +16,10 @@ const JoinSession = () => {
       setError("");
 
       const data = await joinSession(code, displayName);
+
+      // Store displayName so the Welcome page can use it when submitting questions
+      localStorage.setItem("displayName", displayName.trim());
+
       navigate("/welcome", { state: data });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to join");
