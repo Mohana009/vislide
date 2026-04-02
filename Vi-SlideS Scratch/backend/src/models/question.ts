@@ -13,6 +13,14 @@ const questionSchema = new mongoose.Schema({
     type: String,
     default: "Anonymous",
   },
+  answer: {
+    type: String,
+    default: null,
+  },
+  answeredAt: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
